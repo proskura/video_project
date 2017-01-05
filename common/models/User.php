@@ -31,6 +31,20 @@ class User extends ActiveRecord implements IdentityInterface
     const ROLE_ADMIN = 1;
 
 
+    public $password;
+    public $confirm_password;
+
+
+    public static function isUserAdmin($username)
+    {
+        if(static::findAll(['username' => $username, 'role' => self::ROLE_ADMIN])) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
     /**
      * @inheritdoc
      */
@@ -55,9 +69,28 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
+            [['username', 'email', 'password'], 'safe'],
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED]],
             ['role', 'default', 'value' => self::ROLE_USER],
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'name' => 'Name',
+            'slug' => 'Slug',
+            'status' => 'Status',
+            'image_id' => 'Image ID',
+            'created_at' => 'Created At',
+            'created_by' => 'Created By',
+            'updated_at' => 'Updated At',
+            'updated_by' => 'Updated By',
         ];
     }
 
