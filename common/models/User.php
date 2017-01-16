@@ -34,6 +34,8 @@ class User extends ActiveRecord implements IdentityInterface
     public $password;
     public $confirm_password;
 
+    public $section;
+
 
     public static function isUserAdmin($username)
     {
@@ -69,7 +71,7 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
-            [['username', 'email', 'password'], 'safe'],
+            [['username', 'email', 'password', 'section'], 'safe'],
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED]],
             ['role', 'default', 'value' => self::ROLE_USER],
@@ -224,4 +226,44 @@ class User extends ActiveRecord implements IdentityInterface
     {
         $this->password_reset_token = null;
     }
+
+    public function getDate($date) {
+        return Yii::$app->formatter->asDate($date, 'medium');
+    }
+
+    public function getAvailableSections()
+    {
+        return Section::find()->joinWith('users')->where([User::tableName().'.id' => $this->id])->all();
+    }
+
+    public function hasAccessFor(Section $section)
+    {
+        $subscription = Subscription::findOne([
+            'user_id' => $this->id,
+            'section_id' => $section->id,
+        ]);
+
+        return $subscription ? true : false;
+    }
+
+    public function addSection(Section $section)
+    {
+        $subscriptionExists = Subscription::findOne([
+            'user_id' => $this->id,
+            'section_id' => $section->id,
+        ]);
+
+        if(!$subscriptionExists){
+            $subscription = new Subscription();
+            $subscription->load(['Subscription' => [
+                'user_id' => $this->id,
+                'section_id' => $section->id,
+            ]]);
+            $result = $subscription->save(false);
+            return $result;
+        }
+        return true;
+    }
 }
+
+
